@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reactor Dashboard</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; text-align: center; }
+    .status { font-size: 1.5em; margin: 20px; }
+    .controls button { margin: 10px; padding: 10px 20px; font-size: 1em; }
+  </style>
+</head>
+<body>
+  <h1>⚡ Reactor Control Dashboard ⚡</h1>
+
+  <div class="status">
+    <p>Status: <span id="status">Unknown</span></p>
+    <p>Temperature: <span id="temperature">0</span> K</p>
+    <p>Field Strength: <span id="field">0</span>%</p>
+    <p>Output: <span id="output">0</span> RF/t</p>
+  </div>
+
+  <div class="controls">
+    <button onclick="setStatus('online')">Start</button>
+    <button onclick="setStatus('idle')">Stop</button>
+  </div>
+
+  <script>
+    const socket = io();
+
+    socket.on("reactorUpdate", (data) => {
+      document.getElementById("status").textContent = data.status;
+      document.getElementById("temperature").textContent = data.temperature;
+      document.getElementById("field").textContent = data.fieldStrength;
+      document.getElementById("output").textContent = data.output;
+    });
+
+    function setStatus(status) {
+      socket.emit("setStatus", status);
+    }
+  </script>
+</body>
+</html>
