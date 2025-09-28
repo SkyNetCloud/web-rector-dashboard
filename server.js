@@ -1,54 +1,37 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
 
-const PORT = process.env.PORT || 3000;
-
-// Serve static files (frontend in public/)
 app.use(express.static("public"));
 
-// Example simulated reactor state
-let reactorState = {
-  status: "idle",
-  temperature: 2500,
-  fieldStrength: 50,
-  output: 0
-};
+let reactorStatus = "offline"; // online / offline
+let flowValue = 0;
 
-// Send state updates every 2s
-setInterval(() => {
-  // Fake temperature fluctuation
-  reactorState.temperature += Math.floor(Math.random() * 200 - 100);
-
-  // Clamp values
-  if (reactorState.temperature < 0) reactorState.temperature = 0;
-  if (reactorState.temperature > 9000) reactorState.temperature = 9000;
-
-  io.emit("reactorUpdate", reactorState);
-}, 2000);
-
-// Socket.io listeners
 io.on("connection", (socket) => {
-  console.log("New client connected");
+  console.log("Client connected");
 
-  // Send initial state
-  socket.emit("reactorUpdate", reactorState);
+  // send current state on connect
+  socket.emit("reactorData", { status: reactorStatus, flow: flowValue });
 
-  // Example: handle control commands
   socket.on("setStatus", (status) => {
-    reactorState.status = status;
-    io.emit("reactorUpdate", reactorState);
+    if (status === "online" || status === "idle") {
+      reactorStatus = status;
+      io.emit("reactorData", { status: reactorStatus, flow: flowValue });
+    }
   });
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected");
+  socket.on("setFlow", (value) => {
+    flowValue = value;
+    io.emit("reactorData", { status: reactorStatus, flow: flowValue });
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+server.listen(3000, () => {
+  console.log("Server running on http://localhost:3000");
 });

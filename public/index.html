@@ -1,43 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Reactor Dashboard</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #111; color: #eee; text-align: center; }
-    .status { font-size: 1.5em; margin: 20px; }
-    .controls button { margin: 10px; padding: 10px 20px; font-size: 1em; }
-  </style>
+<meta charset="UTF-8">
+<title>Reactor Dashboard</title>
+<style>
+  body { font-family: monospace; background: #111; color: #eee; }
+  button { margin: 5px; padding: 10px; font-size: 16px; }
+</style>
 </head>
 <body>
-  <h1>⚡ Reactor Control Dashboard ⚡</h1>
+<h1>Reactor Dashboard</h1>
+<p>Status: <span id="status">offline</span></p>
+<p>Flow: <span id="flow">0</span> RF/t</p>
 
-  <div class="status">
-    <p>Status: <span id="status">Unknown</span></p>
-    <p>Temperature: <span id="temperature">0</span> K</p>
-    <p>Field Strength: <span id="field">0</span>%</p>
-    <p>Output: <span id="output">0</span> RF/t</p>
-  </div>
+<button id="activate">Activate Reactor</button>
+<button id="shutdown">Shutdown Reactor</button>
 
-  <div class="controls">
-    <button onclick="setStatus('online')">Start</button>
-    <button onclick="setStatus('idle')">Stop</button>
-  </div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
 
-  <script>
-    const socket = io();
+const statusSpan = document.getElementById("status");
+const flowSpan = document.getElementById("flow");
+const activateBtn = document.getElementById("activate");
+const shutdownBtn = document.getElementById("shutdown");
 
-    socket.on("reactorUpdate", (data) => {
-      document.getElementById("status").textContent = data.status;
-      document.getElementById("temperature").textContent = data.temperature;
-      document.getElementById("field").textContent = data.fieldStrength;
-      document.getElementById("output").textContent = data.output;
-    });
+socket.on("reactorData", (data) => {
+  statusSpan.textContent = data.status;
+  flowSpan.textContent = data.flow || 0;
+});
 
-    function setStatus(status) {
-      socket.emit("setStatus", status);
-    }
-  </script>
+activateBtn.addEventListener("click", () => {
+  socket.emit("setStatus", "online");
+});
+
+shutdownBtn.addEventListener("click", () => {
+  socket.emit("setStatus", "idle");
+});
+</script>
 </body>
 </html>
